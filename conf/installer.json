@@ -1,0 +1,56 @@
+{
+  "disk": [
+    {
+      "label": "bios",
+      "size": "5MB",
+      "type": "ef02"
+    },
+    {
+      "label": "efi",
+      "size": "256MB",
+      "type": "ef00",
+      "filesystem": {
+        "label": "efi",
+        "mountpoint": "/boot/efi",
+        "type": "vfat"
+      }
+    },
+    {
+      "label": "boot",
+      "size": "512MB",
+      "type": "8300",
+      "filesystem": {
+        "label": "boot",
+        "mountpoint": "/boot",
+        "type": "ext2"
+      }
+    },
+    {
+      "label": "root",
+      "size": "896MB",
+      "type": "8304",
+      "filesystem": {
+        "label": "root",
+        "mountpoint": "/",
+        "type": "f2fs",
+        "image": {
+            "uri": "file:///root.tar.gz",
+            "type": "tar"
+        }
+      }
+    }
+  ],
+  "bootloader": {
+    "type": "grub",
+    "targets": [
+      "i386-pc",
+      "x86_64-efi"
+    ],
+    "options": [
+      "removable",
+      "no-nvram",
+      "no-uefi-secure-boot",
+      "verbose"
+    ]
+  }
+}

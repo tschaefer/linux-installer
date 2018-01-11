@@ -1,0 +1,12 @@
+#!/usr/bin/env perl
+
+use strict;
+use warnings;
+
+use Linux::Installer::App;
+
+sub run {
+    return Linux::Installer::App->new_with_options->run();
+}
+
+exit run();
