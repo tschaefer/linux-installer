@@ -14,7 +14,7 @@ use Linux::Installer::Disk;
 use Linux::Installer::Partition;
 use Linux::Installer::Utils::Types;
 
-our $VERSION = '0.01';
+our $VERSION = '0.02';
 
 has 'bootloader' => (
     is      => 'ro',
@@ -136,6 +136,10 @@ sub _build_disk {
 sub _build_filesystems {
     my $self = shift;
 
+    my $root = File::Spec->catdir( ( $self->root, $self->device ) );
+    my $cmd = sprintf "mkdir -p %s", $root;
+    $self->exec($cmd);
+
     my ( @filesystems, $number );
     foreach ( @{ $self->config->{'disk'} } ) {
         $number++;
@@ -146,11 +150,17 @@ sub _build_filesystems {
             my $type = ucfirst lc $_->{'filesystem'}->{'type'};
             require "Linux/Installer/Filesystem/$type.pm";
 
+            my $mountpoint =
+              File::Spec->catdir( ( $root, $_->{'filesystem'}->{'mountpoint'} ) )
+              if ($_->{'filesystem'}->{'mountpoint'});
+
+            no warnings "uninitialized";
+
             my $filesystem = "Linux::Installer::Filesystem::$type"->new(
                 {
                     device     => $device,
                     label      => $_->{'filesystem'}->{'label'} || undef,
-                    mountpoint => $_->{'filesystem'}->{'mountpoint'} || undef,
+                    mountpoint => $mountpoint || undef,
                 }
             );
             push @filesystems, $filesystem;
@@ -211,13 +221,14 @@ sub _build_partitions {
 
     no warnings "uninitialized";
 
-    my ( @partitions, $start_sector, $end_sector, $number );
+    my ( @partitions, $start_sector, $end_sector, $number, $total_size );
     foreach ( @{ $self->config->{'disk'} } ) {
         $number++;
 
         my $size = uc $_->{'size'};
         my ( $mult, $unit ) = $size =~ /(\d+)([A-Z]+)/;
         $size = $mult * $units{$unit};
+        $total_size += $size;
 
         $start_sector = $end_sector + 2048;
         $end_sector   = $start_sector + $size / $self->disk->sector_size;
@@ -237,25 +248,23 @@ sub _build_partitions {
         push @partitions, $partition;
     }
 
+    $self->logger->error_warn(
+        sprintf "Configuration exceeds disk size '%d B'",
+        $self->disk->size
+    ) if ( $total_size > $self->disk->size );
+
     return \@partitions;
 }
 
 sub _mount_filesystem {
     my $self = shift;
 
-    my $root_directory =
-      File::Spec->catdir( ( $self->root, $self->device ) );
+    no warnings "uninitialized";
 
     foreach ( sort { $a->mountpoint cmp $b->mountpoint }
         @{ $self->filesystems } )
     {
-        my $path = File::Spec->catdir( ( $root_directory, $_->mountpoint ) );
-        if ( !-d $path ) {
-            my $cmd = sprintf "mkdir -p %s", $path;
-            $self->exec($cmd);
-        }
-        my $cmd = sprintf "mount %s %s", $_->device, $path;
-        $self->exec($cmd);
+        $_->mount();
     }
 
     return;
@@ -264,15 +273,12 @@ sub _mount_filesystem {
 sub _umount_filesystem {
     my $self = shift;
 
-    my $root_directory =
-      File::Spec->catdir( ( $self->root, $self->device ) );
+    no warnings "uninitialized";
 
     foreach ( sort { $b->mountpoint cmp $a->mountpoint }
         @{ $self->filesystems } )
     {
-        my $cmd = sprintf "umount %s",
-          File::Spec->catdir( ( $root_directory, $_->mountpoint ) );
-        $self->exec($cmd);
+        $_->umount();
     }
 
     return;
@@ -281,6 +287,7 @@ sub _umount_filesystem {
 sub DEMOLISH {
     my $self = shift;
 
+    $self->_umount_filesystem();
     my $cmd = sprintf "rm -r %s", $self->root;
     $self->exec($cmd);
 
@@ -299,7 +306,6 @@ sub run {
     $self->_mount_filesystem();
     $self->bootloader->install();
     $_->install() foreach ( @{ $self->images } );
-    $self->_umount_filesystem();
 
     $self->logger->info("Finish installation.");
 

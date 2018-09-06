@@ -7,7 +7,7 @@ use Moose;
 with 'Linux::Installer::Image';
 
 has '+name' => (
-    default => 'tar',
+    default => 'squashfs',
 );
 
 sub install {

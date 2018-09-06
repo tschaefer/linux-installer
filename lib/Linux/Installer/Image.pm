@@ -51,6 +51,15 @@ before 'install' => sub {
     return;
 };
 
+after 'install' => sub {
+    my $self = shift;
+
+    my $cmd = sprintf "sync -f %s", $self->target;
+    $self->exec($cmd);
+
+    return;
+};
+
 sub DEMOLISH {
     my $self = shift;
 
