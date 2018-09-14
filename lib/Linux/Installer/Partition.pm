@@ -47,7 +47,8 @@ sub create {
 
     $self->logger->info( sprintf "Create partition: %s", $self->device, );
 
-    my ( $device, $number ) = $self->device =~ /(\/dev\/[a-z]+)(\d+)/;
+    my ( $device, $number ) =
+      $self->device =~ /(\/dev\/[[:lower:]]+)([[:digit:]]+)/;
 
     my $cmd = sprintf "sgdisk --new=%d:%d:%d %s", $number, $self->start_sector,
       $self->end_sector, $device;

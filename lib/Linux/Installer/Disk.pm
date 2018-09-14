@@ -39,7 +39,7 @@ has 'size' => (
 sub _build_name {
     my $self = shift;
 
-    my ($dev) = $self->device =~ /.+\/(.+)$/;
+    my ($dev) = $self->device =~ /([[:alnum:]]+)$/;
     my $file  = "/sys/class/block/$dev/device/model";
     my $name  = $self->read($file);
 
@@ -49,7 +49,7 @@ sub _build_name {
 sub _build_sector_size {
     my $self = shift;
 
-    my ($dev)       = $self->device =~ /.+\/(.+)$/;
+    my ($dev)       = $self->device =~ /([[:alnum:]]+)$/;
     my $file        = "/sys/class/block/$dev/queue/hw_sector_size";
     my $sector_size = $self->read($file);
 
@@ -59,7 +59,7 @@ sub _build_sector_size {
 sub _build_size {
     my $self = shift;
 
-    my ($dev)   = $self->device =~ /.+\/(.+)$/;
+    my ($dev)   = $self->device =~ /([[:alnum:]]+)$/;
     my $file    = "/sys/class/block/$dev/size";
     my $sectors = $self->read($file);
     my $size    = $sectors * $self->sector_size;

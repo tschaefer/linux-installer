@@ -15,7 +15,7 @@ use Linux::Installer::Partition;
 use Linux::Installer::Partition::Crypt;
 use Linux::Installer::Utils::Types;
 
-our $VERSION = '0.10';
+our $VERSION = '0.11';
 
 has 'bootloader' => (
     is      => 'ro',
@@ -229,7 +229,7 @@ sub _build_partitions {
         $number++;
 
         my $size = uc $_->{'size'};
-        my ( $mult, $unit ) = $size =~ /(\d+)([A-Z]+)/;
+        my ( $mult, $unit ) = $size =~ /([[:digit:]]+)([[:upper:]]+)/;
         $size = $mult * $units{$unit};
         $total_size += $size;
 

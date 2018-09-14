@@ -1,4 +1,5 @@
 lib/Linux/Installer/Bootloader.pm
+lib/Linux/Installer/Partition/Crypt.pm
 lib/Linux/Installer/Bootloader/Grub.pm
 lib/Linux/Installer/Bootloader/Uboot.pm
 lib/Linux/Installer/Image.pm
@@ -17,9 +18,10 @@ lib/Linux/Installer/App.pm
 lib/Linux/Installer/Disk.pm
 lib/Linux/Installer.pm
 MANIFEST
-README
 bin/linux-installer
 conf/installer.log.conf
 conf/installer.json
 Makefile.PL
 Changes
+README
+README.md
