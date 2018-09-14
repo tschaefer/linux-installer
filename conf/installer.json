@@ -27,7 +27,7 @@
     },
     {
       "label": "root",
-      "size": "896MB",
+      "size": "512MB",
       "type": "8304",
       "filesystem": {
         "label": "root",
@@ -37,6 +37,16 @@
             "uri": "file:///root.tar.gz",
             "type": "tar"
         }
+      }
+    },
+    {
+      "label": "data",
+      "size": "384MB",
+      "type": "8300",
+      "crypt": "qwe123",
+      "filesystem": {
+        "label": "root",
+        "type": "f2fs"
       }
     }
   ],

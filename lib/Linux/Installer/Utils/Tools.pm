@@ -62,4 +62,14 @@ sub read {
     return $string;
 }
 
+sub write {
+    my ( $self, $file, $string ) = @_;
+
+    open my $fh, '>', $file or $self->logger->error_die("$!: $file");
+    print $fh $string;
+    close $fh or $self->logger->error_die("$!: $file");
+
+    return;
+}
+
 1;

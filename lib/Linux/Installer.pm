@@ -12,9 +12,10 @@ use JSON qw( decode_json );
 
 use Linux::Installer::Disk;
 use Linux::Installer::Partition;
+use Linux::Installer::Partition::Crypt;
 use Linux::Installer::Utils::Types;
 
-our $VERSION = '0.02';
+our $VERSION = '0.10';
 
 has 'bootloader' => (
     is      => 'ro',
@@ -70,7 +71,7 @@ has 'json' => (
 
 has 'partitions' => (
     is      => 'ro',
-    isa     => 'ArrayRef[Linux::Installer::Partition]',
+    isa     => 'ArrayRef[Linux::Installer::Partition | Linux::Installer::Partition::Crypt]',
     lazy    => 1,
     builder => '_build_partitions',
     init_arg => undef,
@@ -142,10 +143,11 @@ sub _build_filesystems {
 
     my ( @filesystems, $number );
     foreach ( @{ $self->config->{'disk'} } ) {
-        $number++;
-        my $device = sprintf "%s%d", $self->device, $number;
-
         if ( $_->{'filesystem'} ) {
+            my $part = $self->partitions->[$number];
+            my $device = $part->device;
+            $device = $part->device_mapper
+              if (ref $part eq 'Linux::Installer::Partition::Crypt');
 
             my $type = ucfirst lc $_->{'filesystem'}->{'type'};
             require "Linux/Installer/Filesystem/$type.pm";
@@ -165,6 +167,7 @@ sub _build_filesystems {
             );
             push @filesystems, $filesystem;
         }
+        $number++;
     }
 
     return \@filesystems;
@@ -235,7 +238,10 @@ sub _build_partitions {
 
         my $device = sprintf "%s%d", $self->device, $number;
 
-        my $partition = Linux::Installer::Partition->new(
+        my $type = "Linux::Installer::Partition";
+        $type = "Linux::Installer::Partition::Crypt" if ($_->{'crypt'});
+
+        my $partition = $type->new(
             {
                 device       => $device,
                 type         => $_->{'type'},
@@ -243,6 +249,7 @@ sub _build_partitions {
                 label        => $_->{'label'} || undef,
                 start_sector => $start_sector,
                 end_sector   => $end_sector,
+                passphrase   => $_->{'crypt'},
             }
         );
         push @partitions, $partition;
@@ -284,10 +291,32 @@ sub _umount_filesystem {
     return;
 }
 
+sub _open_crypted_partition {
+    my $self = shift;
+
+    foreach (@{ $self->partitions }) {
+        $_->open() if (ref $_ eq "Linux::Installer::Partition::Crypt");
+    }
+
+    return;
+}
+
+sub _close_crypted_partition {
+    my $self = shift;
+
+    foreach (@{ $self->partitions }) {
+        $_->close() if (ref $_ eq "Linux::Installer::Partition::Crypt");
+    }
+
+    return;
+}
+
+
 sub DEMOLISH {
     my $self = shift;
 
     $self->_umount_filesystem();
+    $self->_close_crypted_partition();
     my $cmd = sprintf "rm -r %s", $self->root;
     $self->exec($cmd);
 
@@ -301,8 +330,8 @@ sub run {
 
     $self->disk->prepare();
     $_->create() foreach ( @{ $self->partitions } );
+    $self->_open_crypted_partition();
     $_->make()   foreach ( @{ $self->filesystems } );
-
     $self->_mount_filesystem();
     $self->bootloader->install();
     $_->install() foreach ( @{ $self->images } );
