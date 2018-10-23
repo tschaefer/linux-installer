@@ -50,6 +50,8 @@ sub _build_key_file {
         UNLINK   => 0,
     );
 
+    $self->write( $key_file, $self->passphrase );
+
     return $key_file;
 }
 
@@ -64,8 +66,6 @@ sub DEMOLISH {
 
 after 'create' => sub {
     my $self = shift;
-
-    $self->write( $self->key_file, $self->passphrase );
 
     my $cmd =
       sprintf

@@ -41,7 +41,7 @@ has 'device' => (
 
 has 'disk' => (
     is      => 'ro',
-    isa     => 'Linux::Installer::Disk',
+    isa     => 'Disk',
     lazy    => 1,
     builder => '_build_disk',
     init_arg => undef,
@@ -71,7 +71,7 @@ has 'json' => (
 
 has 'partitions' => (
     is      => 'ro',
-    isa     => 'ArrayRef[Linux::Installer::Partition | Linux::Installer::Partition::Crypt]',
+    isa     => 'ArrayRef[Partition]',
     lazy    => 1,
     builder => '_build_partitions',
     init_arg => undef,
@@ -145,9 +145,9 @@ sub _build_filesystems {
     foreach ( @{ $self->config->{'disk'} } ) {
         if ( $_->{'filesystem'} ) {
             my $part = $self->partitions->[$number];
-            my $device = $part->device;
-            $device = $part->device_mapper
-              if (ref $part eq 'Linux::Installer::Partition::Crypt');
+            my $device = ref $part eq 'Linux::Installer::Partition::Crypt'
+                       ? $part->device_mapper
+                       : $part->device ;
 
             my $type = ucfirst lc $_->{'filesystem'}->{'type'};
             require "Linux/Installer/Filesystem/$type.pm";
@@ -268,11 +268,8 @@ sub _mount_filesystem {
 
     no warnings "uninitialized";
 
-    foreach ( sort { $a->mountpoint cmp $b->mountpoint }
-        @{ $self->filesystems } )
-    {
-        $_->mount();
-    }
+    $_->mount() foreach ( sort { $a->mountpoint cmp $b->mountpoint }
+        @{ $self->filesystems } );
 
     return;
 }
@@ -282,11 +279,8 @@ sub _umount_filesystem {
 
     no warnings "uninitialized";
 
-    foreach ( sort { $b->mountpoint cmp $a->mountpoint }
-        @{ $self->filesystems } )
-    {
-        $_->umount();
-    }
+    $_->umount() foreach ( sort { $b->mountpoint cmp $a->mountpoint }
+        @{ $self->filesystems } );
 
     return;
 }

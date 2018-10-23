@@ -23,4 +23,14 @@ subtype 'Image'
     => where { does_role( $_, 'Linux::Installer::Image') }
     => message { 'Not a image.' };
 
+subtype 'Partition'
+    => as 'Object'
+    => where { $_->isa( 'Linux::Installer::Partition' ) }
+    => message { 'Not a partition.' };
+
+subtype 'Disk'
+    => as 'Object'
+    => where { $_->isa( 'Linux::Installer::Disk' ) }
+    => message { 'Not a disk.' };
+
 1;

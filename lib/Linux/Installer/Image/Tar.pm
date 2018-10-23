@@ -6,29 +6,22 @@ use warnings;
 use Moose;
 with 'Linux::Installer::Image';
 
-has '+name' => (
-    default => 'tar',
+has '+name' => ( default => 'tar', );
+
+has 'options' => (
+    is      => 'ro',
+    isa     => 'ArrayRef',
+    default => sub {
+        [ "preserve-permissions", "xattrs-include='*.*'", "numeric-owner", ]
+    },
 );
 
 sub install {
     my $self = shift;
 
-    my $path = $self->path;
-
-    my %opts = (
-        gzip  => 'xzf',
-        bzip2 => 'xjf',
-        xz    => 'xJf',
-        tar   => 'xf',
-    );
-
-    my $out;
-    my $cmd = sprintf "file --mime-type %s", $path;
-    $self->exec( $cmd, \$out );
-
-    my ($__, $app) = $out =~ /$path: application\/(x-)?(.+)/;
-    $cmd = sprintf "tar -%s %s -C %s", $opts{$app}, $path, $self->target;
-
+    my $options = join ' ', map { '--' . $_ } @{ $self->options };
+    my $cmd = sprintf "tar --extract --file %s --directory %s %s", $self->path,
+      $self->target, $options;
     $self->exec($cmd);
 
     return;

@@ -34,7 +34,7 @@
         "mountpoint": "/",
         "type": "f2fs",
         "image": {
-            "uri": "file:///root.tar.gz",
+            "uri": "file:///tmp/root.tar.gz",
             "type": "tar"
         }
       }
