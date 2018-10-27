@@ -52,6 +52,8 @@
   ],
   "bootloader": {
     "type": "grub",
+    "boot_directory": "/boot",
+    "efi_directory": "/boot/efi",
     "targets": [
       "i386-pc",
       "x86_64-efi"

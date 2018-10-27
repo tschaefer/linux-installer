@@ -67,6 +67,8 @@ sub DEMOLISH {
 after 'create' => sub {
     my $self = shift;
 
+    $self->logger->info( sprintf "Encrypt partition: %s", $self->device );
+
     my $cmd =
       sprintf
       "cryptsetup luksFormat --batch-mode --type luks2 --key-file=%s %s",
@@ -103,3 +105,53 @@ sub close {
 __PACKAGE__->meta->make_immutable;
 
 1;
+
+__END__
+
+=pod
+
+=encoding utf8
+
+=head1 NAME
+
+Linux::Installer::Partition - Provides crypt extension for partition class.
+
+=head1 DESCRIPTION
+
+This module provides common methods and attributes to encrypt a partition in
+LUKS format with B<cryptsetup>.
+
+See L<Linux::Installer::Partition>
+
+=head1 ATTRIBUTES
+
+=head2 passphrase
+
+Initial passphrase for LUKS container. [required]
+
+=head1 METHODS
+
+=head2 create
+
+This method runs after partition create and initialize the LUKS container.
+
+=head2 open
+
+Opens the LUKS container.
+
+=head2 close
+
+Closes the LUKS container.
+
+=head1 AUTHORS
+
+Tobias Schäfer L<github@blackox.org>
+
+=head1 COPYRIGHT AND LICENSE
+
+This software is copyright (c) 2018 by Tobias Schäfer.
+
+This is free software; you can redistribute it and/or modify it under the same
+terms as the Perl 5 programming language system itself.
+
+=cut

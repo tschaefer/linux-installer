@@ -9,7 +9,7 @@ WriteMakefile(
         resources   => {
             'license'    => 'http://dev.perl.org/licenses',
             'homepage'   => 'https://github.com/tschaefer/linux-installer',
-            'repository' => 'https://github.com/tschaefer/linux-installer',
+            'repository' => 'https://github.com/tschaefer/linux-installer.git',
         }
     },
     'NAME'          => 'Linux::Installer',
@@ -17,7 +17,6 @@ WriteMakefile(
         'IPC::Run'              => '0.99',
         'Log::Log4perl'         => '1.49',
         'Moose'                 => '2.2010',
-        'MooseX::App::Simple'   => '1.39',
         'Readonly'              => '2.05',
         'Text::ParseWords'      => '3.30',
         'Try::Tiny'             => '0.30',

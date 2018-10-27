@@ -3,10 +3,169 @@
 use strict;
 use warnings;
 
-use Linux::Installer::App;
+use FindBin;
+use lib "$FindBin::Bin/../lib";
 
-sub run {
-    return Linux::Installer::App->new_with_options->run();
+use Getopt::Long;
+use Log::Log4perl;
+use Pod::Usage;
+use Try::Tiny;
+use utf8;
+
+use Linux::Installer;
+
+sub print_usage {
+    return pod2usage( -exitval => 255, -verbose => 0 );
 }
 
-exit run();
+sub print_help {
+    return pod2usage(
+        -exitval  => 0,
+        -verbose  => 99,
+        -sections => 'SYNOPSIS|OPTIONS|PARAMETERS',
+    );
+}
+
+sub print_man {
+    return pod2usage( -exitval => 0, -verbose => 2 );
+}
+
+sub parse_opts {
+    my ( $cfgfile, $logcfgfile, $dev, $help, $man );
+
+    my $argc = scalar @ARGV;
+
+    GetOptions(
+        "config-file|f=s"     => \$cfgfile,
+        "log-config-file|l=s" => \$logcfgfile,
+        "help"                => \$help,
+        "man"                 => \$man,
+    ) or print_usage();
+
+    exit print_usage() if ( ( $help || $man ) && $argc != 1 );
+    exit print_help()  if ($help);
+    exit print_man()   if ($man);
+    exit print_usage() if ( !$cfgfile || !$logcfgfile );
+
+    $dev = shift @ARGV;
+    exit print_usage() if ( !$dev );
+
+    return ( $cfgfile, $logcfgfile, $dev );
+}
+
+sub run {
+    my ( $cfgfile, $logcfgfile, $dev ) = parse_opts();
+
+    Log::Log4perl->init($logcfgfile);
+
+    my $installer = Linux::Installer->new(
+        {
+            json   => $cfgfile,
+            device => $dev,
+        }
+    );
+
+    my $rc = try {
+        $installer->run();
+        1;
+    }
+    catch {
+        my $logger = Log::Log4perl->get_logger();
+        $logger->error( ( split / at/ )[0] );
+    };
+
+    exit $rc ? 0 : 1;
+}
+
+run();
+
+__END__
+
+=encoding utf8
+
+=head1 NAME
+
+B<linux-installer> - Simple installer for Linux systems.
+
+=head1 SYNOPSIS
+
+linux-installer --config-file|-f FILE --log-config-file|-l FILE DISK
+
+linux-installer --help | --man
+
+=head1 OPTIONS
+
+=over 8
+
+=item B<--config-file|-f> FILE
+
+Specifies a configuration file in JSON format.
+
+=item B<--log-config-file|-l> FILE
+
+Specifies a Log::Log4perl configuration file.
+
+=back
+
+=head1 PARAMETERS
+
+=over 8
+
+=item B<BLOCKDEVICE>
+
+Target disk for installation.
+
+=back
+
+=head1 DESCRIPTION
+
+linux-installer is a simple installer for Linux systems.
+
+=over 2
+
+=item *
+
+zap disk
+
+=item *
+
+create partitions (GPT)
+
+=item *
+
+crypt partitions with LUKS container (dm-crypt)
+
+=item *
+
+make filesystem (ext2, ext3, ext4, f2fs, vfat)
+
+=item *
+
+install images (tarball, binary)
+
+=item *
+
+install bootloader (grub2)
+
+=back
+
+The installer configuration (--config-file|-f) is provided in JSON format and
+describes the layout and steps to take. The installation is logged by
+Log::Log4perl customised by the log configuration (--log-config-file|-l).
+
+=head1 SEE ALSO
+
+L<Linux::Installer> L<Log::Log4perl>
+
+=head1 AUTHORS
+
+Tobias Schäfer L<github@blackox.org>
+
+=head1 COPYRIGHT AND LICENSE
+
+This software is copyright (c) 2018 by Tobias Schäfer.
+
+This is free software; you can redistribute it and/or modify it under the same
+terms as the Perl 5 programming language system itself.
+
+=cut

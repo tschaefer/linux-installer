@@ -1,9 +1,8 @@
 lib/Linux/Installer/Bootloader.pm
 lib/Linux/Installer/Partition/Crypt.pm
 lib/Linux/Installer/Bootloader/Grub.pm
-lib/Linux/Installer/Bootloader/Uboot.pm
 lib/Linux/Installer/Image.pm
-lib/Linux/Installer/Image/Squashfs.pm
+lib/Linux/Installer/Image/Binary.pm
 lib/Linux/Installer/Image/Tar.pm
 lib/Linux/Installer/Filesystem.pm
 lib/Linux/Installer/Filesystem/Vfat.pm
@@ -14,7 +13,6 @@ lib/Linux/Installer/Filesystem/Ext3.pm
 lib/Linux/Installer/Utils/Tools.pm
 lib/Linux/Installer/Utils/Types.pm
 lib/Linux/Installer/Partition.pm
-lib/Linux/Installer/App.pm
 lib/Linux/Installer/Disk.pm
 lib/Linux/Installer.pm
 MANIFEST

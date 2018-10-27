@@ -6,9 +6,6 @@ use warnings;
 use Moose::Role;
 with 'Linux::Installer::Utils::Tools';
 
-use Linux::Installer::Image;
-use Linux::Installer::Utils::Types;
-
 requires 'make';
 
 has 'device' => (
@@ -23,14 +20,8 @@ has 'label' => (
 );
 
 has 'mountpoint' => (
-    is  => 'ro',
+    is  => 'rw',
     isa => 'Maybe[Str]',
-);
-
-has 'name' => (
-    is       => 'ro',
-    isa      => 'Str',
-    init_arg => undef,
 );
 
 before 'make' => sub {
@@ -77,3 +68,58 @@ sub umount {
 }
 
 1;
+
+__END__
+
+=pod
+
+=encoding utf8
+
+=head1 NAME
+
+Linux::Installer::Filesystem - Provides an interface for filesystem classes.
+
+=head1 DESCRIPTION
+
+This module provides common methods and attributes for filesystem classes.
+
+=head1 ATTRIBUTES
+
+=head2 device
+
+Target device (partition). [required]
+
+=head2 label
+
+Filesystem label. [optional]
+
+=head2 mountpoint
+
+Filesystem mountpoint. [optional]
+
+=head1 METHODS
+
+=head2 make
+
+Create filesystem. Must be implemented by consuming class.
+
+=head2 mount
+
+Mount filesystem if is created and mountpoint is available.
+
+=head2
+
+Umount filesystem if mounted.
+
+=head1 AUTHORS
+
+Tobias Schäfer L<github@blackox.org>
+
+=head1 COPYRIGHT AND LICENSE
+
+This software is copyright (c) 2018 by Tobias Schäfer.
+
+This is free software; you can redistribute it and/or modify it under the same
+terms as the Perl 5 programming language system itself.
+
+=cut

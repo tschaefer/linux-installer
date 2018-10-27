@@ -6,8 +6,6 @@ use warnings;
 use Moose;
 with 'Linux::Installer::Utils::Tools';
 
-use Linux::Installer::Utils::Types;
-
 has 'device' => (
     is       => 'ro',
     isa      => 'Str',
@@ -26,9 +24,8 @@ has 'label' => (
 );
 
 has 'size' => (
-    is       => 'ro',
-    isa      => 'Int',
-    required => 1,
+    is  => 'ro',
+    isa => 'Maybe[Int]',
 );
 
 has 'start_sector' => (
@@ -36,6 +33,7 @@ has 'start_sector' => (
     isa      => 'Int',
     required => 1,
 );
+
 has 'type' => (
     is       => 'ro',
     isa      => 'Str',
@@ -45,7 +43,7 @@ has 'type' => (
 sub create {
     my ( $self, $start_sector, $end_sector ) = @_;
 
-    $self->logger->info( sprintf "Create partition: %s", $self->device, );
+    $self->logger->info( sprintf "Create partition: %s", $self->device );
 
     my ( $device, $number ) =
       $self->device =~ /(\/dev\/[[:lower:]]+)([[:digit:]]+)/;
@@ -69,3 +67,81 @@ sub create {
 __PACKAGE__->meta->make_immutable;
 
 1;
+
+__END__
+
+=pod
+
+=encoding utf8
+
+=head1 NAME
+
+Linux::Installer::Partition - Creates a partition.
+
+=head1 SYNOPSIS
+
+    use Linux::Installer::Partition;
+    use Log::Log4perl;
+
+    Log::Log4perl->init('conf/installer.log.conf');
+
+    my $part = Linux::Installer::Partition->new(
+        {
+            device       => /dev/sda1,
+            start_sector => 2048,
+            end_sector   => 1048576,
+            type         => 'EF00',
+            label        => 'EFI',
+        }
+    );
+    $part->create();
+
+=head1 DESCRIPTION
+
+This module provides a method and attributes for creating a partition with
+B<sgdisk>.
+
+=head1 ATTRIBUTES
+
+=head2 device
+
+Target device (partition). [required]
+
+=head2 start_sector
+
+Partition start sector. [required]
+
+=head2 end_sector
+
+Partition end sector. [required]
+
+=head2 type
+
+Partition type. [required]
+
+=head2 label
+
+Partition label. [optional]
+
+=head2 size
+
+Partition size. [optional]
+
+=head1 METHODS
+
+=head2 create
+
+Run the creation.
+
+=head1 AUTHORS
+
+Tobias Schäfer L<github@blackox.org>
+
+=head1 COPYRIGHT AND LICENSE
+
+This software is copyright (c) 2018 by Tobias Schäfer.
+
+This is free software; you can redistribute it and/or modify it under the same
+terms as the Perl 5 programming language system itself.
+
+=cut

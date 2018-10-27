@@ -84,3 +84,47 @@ sub _build_path {
 }
 
 1;
+
+__END__
+
+=pod
+
+=encoding utf8
+
+=head1 NAME
+
+Linux::Installer::Image - Provides an interface for image classes.
+
+=head1 DESCRIPTION
+
+This module provides common methods and attributes for image classes.
+
+=head1 ATTRIBUTES
+
+=head2 target
+
+Target path or device (partition). [required]
+
+=head2 uri
+
+Uniform Resource Identifier L<URI> refer to image. [required]
+
+=head1 METHODS
+
+=head2 install
+
+Fetch and install image. Installation must be implemented by consuming class.
+B<curl> is used to fetch the image file.
+
+=head1 AUTHORS
+
+Tobias Schäfer L<github@blackox.org>
+
+=head1 COPYRIGHT AND LICENSE
+
+This software is copyright (c) 2018 by Tobias Schäfer.
+
+This is free software; you can redistribute it and/or modify it under the same
+terms as the Perl 5 programming language system itself.
+
+=cut

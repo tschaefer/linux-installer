@@ -81,3 +81,69 @@ sub prepare {
 __PACKAGE__->meta->make_immutable;
 
 1;
+
+__END__
+
+=pod
+
+=encoding utf8
+
+=head1 NAME
+
+Linux::Installer::Disk - Zaps a disk.
+
+=head1 SYNOPSIS
+
+    use Linux::Installer::Disk;
+    use Log::Log4perl;
+
+    Log::Log4perl->init('conf/installer.log.conf');
+
+    my $disk = Linux::Installer::Disk->new(
+        {
+            device => '/dev/sda',
+        }
+    );
+    $disk->prepare();
+
+=head1 DESCRIPTION
+
+This module provides attributes gathering some infos from sysfs about the
+device (disk) and a method for zapping the disk with B<sgdisk>.
+
+=head1 ATTRIBUTES
+
+=head2 device
+
+Target device (disk). [required]
+
+=head2 name
+
+Device model name. [readonly]
+
+=head2 sector_size
+
+Device sector size in bytes. [readonly]
+
+=head2 size
+
+Device size in bytes. [readonly]
+
+=head1 METHODS
+
+=head2 prepare
+
+Zap the device.
+
+=head1 AUTHORS
+
+Tobias Schäfer L<github@blackox.org>
+
+=head1 COPYRIGHT AND LICENSE
+
+This software is copyright (c) 2018 by Tobias Schäfer.
+
+This is free software; you can redistribute it and/or modify it under the same
+terms as the Perl 5 programming language system itself.
+
+=cut

@@ -15,7 +15,7 @@ use Linux::Installer::Partition;
 use Linux::Installer::Partition::Crypt;
 use Linux::Installer::Utils::Types;
 
-our $VERSION = '0.11';
+our $VERSION = '1.00';
 
 has 'bootloader' => (
     is      => 'ro',
@@ -101,10 +101,15 @@ sub _build_bootloader {
     require "Linux/Installer/Bootloader/$type.pm";
 
     my $config = $self->config->{'bootloader'};
-    delete $config->{'type'};
     $config->{'root_directory'} =
       File::Spec->catdir( ( $self->root, $self->device ) );
     $config->{'device'} = $self->device;
+    $config->{'boot_directory'} =
+      File::Spec->catdir( ( $self->root, $self->device,
+        $config->{'boot_directory'} || '/boot' ) );
+    $config->{'efi_directory'} =
+      File::Spec->catdir( ( $self->root, $self->device,
+        $config->{'efi_directory'} || '/boot/efi' ) ) ;
 
     my $bootloader =
       "Linux::Installer::Bootloader::$type"->new( { %{$config} } );
@@ -147,7 +152,7 @@ sub _build_filesystems {
             my $part = $self->partitions->[$number];
             my $device = ref $part eq 'Linux::Installer::Partition::Crypt'
                        ? $part->device_mapper
-                       : $part->device ;
+                       : $part->device;
 
             my $type = ucfirst lc $_->{'filesystem'}->{'type'};
             require "Linux/Installer/Filesystem/$type.pm";
@@ -193,7 +198,7 @@ sub _build_images {
                     )
                 );
             }
-            elsif ( $type eq 'Squashfs' ) {
+            elsif ( $type eq 'Binary' ) {
                 $target = sprintf "%s%d", $self->device, $number;
             }
 
@@ -332,9 +337,107 @@ sub run {
 
     $self->logger->info("Finish installation.");
 
-    return;
+    return 1;
 }
 
 __PACKAGE__->meta->make_immutable;
 
 1;
+
+__END__
+
+=pod
+
+=encoding utf8
+
+=head1 NAME
+
+Linux::Installer - Main class controlling the install process.
+
+=head1 SYNOPSIS
+
+    use Linux::Installer;
+    use Log::Log4perl;
+
+    Log::Log4perl->init('conf/installer.log.conf');
+
+    my $installer = Linux::Installer->new(
+        {
+            json   => 'conf/installer.json',
+            device => '/dev/sda',
+        }
+    );
+    $installer->run();
+
+=head1 DESCRIPTION
+
+This module parses the user configuration, creates the needed
+Linux::Installer objects and runs the installation.
+
+=over 2
+
+=item *
+
+zap disk
+
+=item *
+
+create partitions (GPT)
+
+=item *
+
+crypt partitions with LUKS container (dm-crypt)
+
+=item *
+
+make filesystem (ext2, ext3, ext4, f2fs, vfat)
+
+=item *
+
+install images (tarball, binary)
+
+=item *
+
+install bootloader (grub2)
+
+=back
+
+The configuration is provided in JSON format and B<must> at least describe a
+disk with one partition containing a filesystem and the mountpoint C</boot>
+and a bootloader, see L<conf/installer.json>.
+There is no syntactic nor semantic check of the configuration.
+
+All submodules (Moose classes) can be used seperatly. There are no
+dependencies between these.
+
+Log::Log4perl B<must> be initialized external before using Linux::Installer or
+one of its submodules, see L</SYNOPSIS> and L<conf/installer.log.conf>.
+
+=head1 ATTRIBUTES
+
+=head2 device
+
+Target device (disk) for installation. [required]
+
+=head2 json
+
+File containing the JSON formatted configuration. [required]
+
+=head1 METHODS
+
+=head2 run
+
+Runs the installation.
+
+=head1 AUTHORS
+
+Tobias Schäfer L<github@blackox.org>
+
+=head1 COPYRIGHT AND LICENSE
+
+This software is copyright (c) 2018 by Tobias Schäfer.
+
+This is free software; you can redistribute it and/or modify it under the same
+terms as the Perl 5 programming language system itself.
+
+=cut

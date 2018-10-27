@@ -35,12 +35,17 @@ sub exec {
         $self->logger->error_die( ( split / at/ )[0] );
     };
 
-    $$output = $out if ($output);
-    $$error  = $err if ($error);
+    if ($rc) {
+        $err = $err // "failed.";
+
+        $self->logger->error_die($err) if (!$no_exception);
+        $self->logger->error($err);
+    }
 
     $self->logger->trace($out) if ($out);
 
-    $self->logger->error_die($err) if ( $rc && $err && !$no_exception );
+    $$output = $out if ($output);
+    $$error  = $err if ($error);
 
     return $rc ? 1 : 0;
 }
@@ -73,3 +78,60 @@ sub write {
 }
 
 1;
+
+__END__
+
+=pod
+
+=encoding utf8
+
+=head1 NAME
+
+Linux::Installer::Utils::Tools - Provides basic attributes and IO methods.
+
+=head1 DESCRIPTION
+
+The package provides basic attributes and IO tools and is consumed by the
+several Linux::Installer classes and roles.
+
+=head1 ATTRIBUTES
+
+=head2 logger
+
+Log::Log4perl::Logger object. [readonly]
+
+=head1 METHODS
+
+=head2 exec
+
+Execute a command and optional receive output and / or error message.
+Dies if the command can not be executed. Also dies if the command
+return value is unequal 0. This can be avoided by setting no exception.
+
+    $self->exec("ls -l", \$out, \$err, 1);
+
+=head2 read
+
+Slurps a file, trims whitespace and returns string.
+Dies on open and close error.
+
+    my $mounts = $self->read("/proc/mounts");
+
+=head2 write
+
+Writes string into a file. Dies on open and close error.
+
+    $self->write("/tmp/foobar", "Hello, World.");
+
+=head1 AUTHORS
+
+Tobias Schäfer L<github@blackox.org>
+
+=head1 COPYRIGHT AND LICENSE
+
+This software is copyright (c) 2018 by Tobias Schäfer.
+
+This is free software; you can redistribute it and/or modify it under the same
+terms as the Perl 5 programming language system itself.
+
+=cut
