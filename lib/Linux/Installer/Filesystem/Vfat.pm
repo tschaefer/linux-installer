@@ -12,7 +12,7 @@ sub make {
     my $cmd = sprintf "mkfs.vfat %s %s",
       $self->label ? "-n " . $self->label : '',
       $self->device;
-    $self->exec( $cmd, undef, undef, 1 );
+    $self->exec($cmd);
 
     return;
 }

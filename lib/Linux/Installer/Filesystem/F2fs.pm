@@ -12,7 +12,7 @@ sub make {
     my $cmd = sprintf "mkfs.f2fs %s %s",
       $self->label ? "-l " . $self->label : '',
       $self->device;
-    $self->exec( $cmd, undef, undef, 1 );
+    $self->exec($cmd);
 
     return;
 }

@@ -20,7 +20,7 @@ has 'logger' => (
 );
 
 sub exec {
-    my ( $self, $cmd, $output, $error, $no_exception ) = @_;
+    my ( $self, $cmd, $output, $error ) = @_;
 
     my @exec = shellwords($cmd);
 
@@ -29,25 +29,19 @@ sub exec {
     my ( $rc, $out, $err );
     try {
         IPC::Run::run( \@exec, '>', \$out, '2>', \$err );
-        $rc = $? >> 8;
+        $rc = $?;
     }
     catch {
         $self->logger->error_die( ( split / at/ )[0] );
     };
 
-    if ($rc) {
-        $err = $err // "failed.";
-
-        $self->logger->error_die($err) if (!$no_exception);
-        $self->logger->error($err);
-    }
-
+    $self->logger->error_die(sprintf "%s: %s", $cmd, $err) if ($rc) ;
     $self->logger->trace($out) if ($out);
 
     $$output = $out if ($output);
     $$error  = $err if ($error);
 
-    return $rc ? 1 : 0;
+    return;
 }
 
 sub read {
@@ -71,7 +65,7 @@ sub write {
     my ( $self, $file, $string ) = @_;
 
     open my $fh, '>', $file or $self->logger->error_die("$!: $file");
-    print $fh $string;
+    print ${fh} $string;
     close $fh or $self->logger->error_die("$!: $file");
 
     return;
@@ -104,9 +98,8 @@ Log::Log4perl::Logger object. [readonly]
 
 =head2 exec
 
-Execute a command and optional receive output and / or error message.
-Dies if the command can not be executed. Also dies if the command
-return value is unequal 0. This can be avoided by setting no exception.
+Execute a command and optional receives output and / or error message.
+Dies if the command can not be executed or fails.
 
     $self->exec("ls -l", \$out, \$err, 1);
 

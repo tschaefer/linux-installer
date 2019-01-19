@@ -17,6 +17,8 @@ use Linux::Installer::Utils::Types;
 
 our $VERSION = '1.00';
 
+no warnings qw( uninitialized );
+
 has 'bootloader' => (
     is      => 'ro',
     isa     => 'Bootloader',
@@ -161,8 +163,6 @@ sub _build_filesystems {
               File::Spec->catdir( ( $root, $_->{'filesystem'}->{'mountpoint'} ) )
               if ($_->{'filesystem'}->{'mountpoint'});
 
-            no warnings "uninitialized";
-
             my $filesystem = "Linux::Installer::Filesystem::$type"->new(
                 {
                     device     => $device,
@@ -227,8 +227,6 @@ sub _build_partitions {
         PB => 1024 * 1024 * 1024 * 1024 * 1024,
     );
 
-    no warnings "uninitialized";
-
     my ( @partitions, $start_sector, $end_sector, $number, $total_size );
     foreach ( @{ $self->config->{'disk'} } ) {
         $number++;
@@ -271,7 +269,6 @@ sub _build_partitions {
 sub _mount_filesystem {
     my $self = shift;
 
-    no warnings "uninitialized";
 
     $_->mount() foreach ( sort { $a->mountpoint cmp $b->mountpoint }
         @{ $self->filesystems } );
@@ -281,8 +278,6 @@ sub _mount_filesystem {
 
 sub _umount_filesystem {
     my $self = shift;
-
-    no warnings "uninitialized";
 
     $_->umount() foreach ( sort { $b->mountpoint cmp $a->mountpoint }
         @{ $self->filesystems } );

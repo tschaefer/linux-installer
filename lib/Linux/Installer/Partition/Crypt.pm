@@ -114,7 +114,7 @@ __END__
 
 =head1 NAME
 
-Linux::Installer::Partition - Provides crypt extension for partition class.
+Linux::Installer::Partition::Crypt - Provides crypt extension for partition class.
 
 =head1 DESCRIPTION
 

@@ -1,2 +1,7 @@
 0.01  Sun Apr 22 11:21:30 2018
     - initial version
+
+1.00  Sat Jan 19 10:56:50 2019
+    - add partition encrypt functionality
+    - add POD
+    - minor fixes

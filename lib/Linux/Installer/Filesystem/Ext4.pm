@@ -12,7 +12,7 @@ sub make {
     my $cmd = sprintf "mkfs.ext4 %s %s",
       $self->label ? "-L " . $self->label : '',
       $self->device;
-    $self->exec( $cmd, undef, undef, 1 );
+    $self->exec($cmd);
 
     $cmd = sprintf "tune2fs -c -1 -i 0 %s", $self->device;
     $self->exec($cmd);
