@@ -8,7 +8,9 @@ with 'Linux::Installer::Utils::Tools';
 
 use File::Spec;
 use File::Temp;
-use JSON qw( decode_json );
+use JSON::XS;
+use YAML::XS;
+use Try::Tiny;
 
 use Linux::Installer::Disk;
 use Linux::Installer::Partition;
@@ -65,7 +67,7 @@ has 'images' => (
     init_arg => undef,
 );
 
-has 'json' => (
+has 'configfile' => (
     is       => 'ro',
     isa      => 'Str',
     required => 1,
@@ -122,10 +124,24 @@ sub _build_bootloader {
 sub _build_config {
     my $self = shift;
 
-    my $data   = $self->read( File::Spec->rel2abs( $self->json ) );
-    my $config = decode_json($data);
+    my $data = $self->read( File::Spec->rel2abs( $self->configfile ) );
 
-    return $config;
+    my $config;
+    $config = try {
+        my $json = JSON::XS::decode_json($data);
+        return $json;
+    };
+    return $config if ($config);
+
+    $config = try {
+        my $yaml = YAML::XS::Load($data);
+        return $yaml;
+    };
+    return $config if ($config);
+
+    $self->logger->error_die("Bad configuration file.");
+
+    return;
 }
 
 sub _build_disk {
@@ -239,7 +255,10 @@ sub _build_partitions {
         $start_sector = $end_sector + 2048;
         $end_sector   = $start_sector + $size / $self->disk->sector_size;
 
-        my $device = sprintf "%s%d", $self->device, $number;
+        my $device = $self->device =~ /[a-z]+[0-9]+$/
+                   ? $self->device . 'p'
+                   : $self->device;
+        $device = sprintf "%s%d", $device, $number;
 
         my $type = "Linux::Installer::Partition";
         $type = "Linux::Installer::Partition::Crypt" if ($_->{'crypt'});
@@ -347,7 +366,7 @@ __END__
 
 =head1 NAME
 
-Linux::Installer - Main class controlling the install process.
+Linux::Installer - Main class controlling the installation process.
 
 =head1 SYNOPSIS
 
@@ -358,8 +377,8 @@ Linux::Installer - Main class controlling the install process.
 
     my $installer = Linux::Installer->new(
         {
-            json   => 'conf/installer.json',
-            device => '/dev/sda',
+            configfile => 'conf/installer.json',
+            device     => '/dev/sda',
         }
     );
     $installer->run();
@@ -397,9 +416,9 @@ install bootloader (grub2)
 
 =back
 
-The configuration is provided in JSON format and B<must> at least describe a
-disk with one partition containing a filesystem and the mountpoint C</boot>
-and a bootloader, see L<conf/installer.json>.
+The configuration is provided in JSON or YAML format and B<must> at least
+describe a disk with one partition containing a filesystem and the mountpoint
+C</boot> and a bootloader, see L<conf/installer.json>.
 There is no syntactic nor semantic check of the configuration.
 
 All submodules (Moose classes) can be used seperatly. There are no
@@ -414,15 +433,15 @@ one of its submodules, see L</SYNOPSIS> and L<conf/installer.log.conf>.
 
 Target device (disk) for installation. [required]
 
-=head2 json
+=head2 configfile
 
-File containing the JSON formatted configuration. [required]
+File containing the JSON or YAML formatted configuration. [required]
 
 =head1 METHODS
 
 =head2 run
 
-Runs the installation.
+Run the installation.
 
 =head1 AUTHORS
 

@@ -1,0 +1,47 @@
+bootloader:
+  boot_directory: /boot
+  efi_directory: /boot/efi
+  options:
+  - removable
+  - no-nvram
+  - no-uefi-secure-boot
+  - verbose
+  targets:
+  - i386-pc
+  - x86_64-efi
+  type: grub
+disk:
+- label: bios
+  size: 5MB
+  type: ef02
+- filesystem:
+    label: efi
+    mountpoint: /boot/efi
+    type: vfat
+  label: efi
+  size: 256MB
+  type: ef00
+- filesystem:
+    label: boot
+    mountpoint: /boot
+    type: ext2
+  label: boot
+  size: 512MB
+  type: '8300'
+- filesystem:
+    image:
+      type: tar
+      uri: file:///tmp/root.tar.gz
+    label: root
+    mountpoint: /
+    type: f2fs
+  label: root
+  size: 512MB
+  type: '8304'
+- crypt: qwe123
+  filesystem:
+    label: data
+    type: f2fs
+  label: data
+  size: 384MB
+  type: '8300'

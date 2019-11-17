@@ -45,8 +45,15 @@ sub create {
 
     $self->logger->info( sprintf "Create partition: %s", $self->device );
 
-    my ( $device, $number ) =
-      $self->device =~ /(\/dev\/[[:lower:]]+)([[:digit:]]+)/;
+    my ( $device, $number );
+    if ( $self->device =~ /[0-9]+p[0-9]+$/ ) {
+        ( $device, $number ) =
+          $self->device =~ /(\/dev\/[[:alnum:]]+)p([[:digit:]]+)/;
+    }
+    else {
+          ( $device, $number ) =
+            $self->device =~ /(\/dev\/[[:lower:]]+)([[:digit:]]+)/;
+    }
 
     my $cmd = sprintf "sgdisk --new=%d:%d:%d %s", $number, $self->start_sector,
       $self->end_sector, $device;
@@ -56,9 +63,9 @@ sub create {
     $self->exec($cmd);
 
     if ( $self->label ) {
-        $cmd = sprintf "sgdisk --change-name=%d:%s %s", $number, $self->label,
-          $device;
-        $self->exec($cmd);
+          $cmd = sprintf "sgdisk --change-name=%d:%s %s", $number, $self->label,
+            $device;
+          $self->exec($cmd);
     }
 
     return;

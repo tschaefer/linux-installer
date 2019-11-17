@@ -6,10 +6,17 @@ use warnings;
 use Moose;
 with 'Linux::Installer::Image';
 
+has 'blocksize' => (
+    is      => 'ro',
+    isa     => 'Str',
+    default => '2M',
+);
+
 sub install {
     my $self = shift;
 
-    my $cmd = sprintf "dd if=%s of=%s bs=2M", $self->path, $self->target;
+    my $cmd = sprintf "dd if=%s of=%s obs=%s", $self->path, $self->target,
+      $self->blocksize;
     $self->exec($cmd);
 
     return;
@@ -34,6 +41,12 @@ Linux::Installer::Image::Binary - Provides an image class.
 This module implements the image interface method install.
 
 See L<Linux::Installer::Image>
+
+=head1 ATTRIBUTES
+
+=head2 blocksize
+
+Write up to n bytes at a time, default C<2M>. [optional]
 
 =head1 METHODS
 

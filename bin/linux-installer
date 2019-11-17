@@ -60,8 +60,8 @@ sub run {
 
     my $installer = Linux::Installer->new(
         {
-            json   => $cfgfile,
-            device => $dev,
+            configfile => $cfgfile,
+            device     => $dev,
         }
     );
 

@@ -1,3 +1,5 @@
+#!/usr/bin/env perl
+
 use strict;
 use warnings;
 
@@ -18,12 +20,14 @@ WriteMakefile(
     'NAME'          => 'Linux::Installer',
     'PREREQ_PM'     => {
         'IPC::Run'              => '0.99',
+        'JSON::XS'              => '4.02',
         'Log::Log4perl'         => '1.49',
         'Moose'                 => '2.2010',
         'Readonly'              => '2.05',
         'Text::ParseWords'      => '3.30',
         'Try::Tiny'             => '0.30',
         'URI'                   => '1.73',
+        'YAML::XS'              => '0.80',
     },
     'VERSION_FROM'  => 'lib/Linux/Installer.pm',
     'clean'         => { FILES => 'Linux-Installer-*' },

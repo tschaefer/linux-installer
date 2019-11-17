@@ -6,6 +6,8 @@ use warnings;
 use Moose;
 with 'Linux::Installer::Utils::Tools';
 
+use File::Spec;
+
 has 'device' => (
     is       => 'ro',
     isa      => 'Str',
@@ -36,12 +38,20 @@ has 'size' => (
     init_arg => undef,
 );
 
+sub _read_disk_info {
+    my ( $self, $uri ) = @_;
+
+    my ($dev) = $self->device =~ /([[:alnum:]]+)$/;
+    my $file  = File::Spec->catdir( '/sys/class/block', $dev, $uri );
+    my $info; $info  = $self->read($file) if (-e $file);
+
+    return $info;
+}
+
 sub _build_name {
     my $self = shift;
 
-    my ($dev) = $self->device =~ /([[:alnum:]]+)$/;
-    my $file  = "/sys/class/block/$dev/device/model";
-    my $name  = $self->read($file);
+    my $name = $self->_read_disk_info('device/model') || 'unknwon';
 
     return $name;
 }
@@ -49,9 +59,7 @@ sub _build_name {
 sub _build_sector_size {
     my $self = shift;
 
-    my ($dev)       = $self->device =~ /([[:alnum:]]+)$/;
-    my $file        = "/sys/class/block/$dev/queue/hw_sector_size";
-    my $sector_size = $self->read($file);
+    my $sector_size = $self->_read_disk_info('queue/hw_sector_size');
 
     return $sector_size;
 }
@@ -59,9 +67,7 @@ sub _build_sector_size {
 sub _build_size {
     my $self = shift;
 
-    my ($dev)   = $self->device =~ /([[:alnum:]]+)$/;
-    my $file    = "/sys/class/block/$dev/size";
-    my $sectors = $self->read($file);
+    my $sectors = $self->_read_disk_info('size');
     my $size    = $sectors * $self->sector_size;
 
     return $size;

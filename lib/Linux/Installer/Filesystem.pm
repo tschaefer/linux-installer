@@ -3,6 +3,8 @@ package Linux::Installer::Filesystem;
 use strict;
 use warnings;
 
+use Try::Tiny;
+
 use Moose::Role;
 with 'Linux::Installer::Utils::Tools';
 
@@ -56,7 +58,11 @@ sub umount {
     return if ( !-e $self->mountpoint );
 
     my $cmd = sprintf "mountpoint -q %s", $self->mountpoint;
-    return if ( $self->exec($cmd) );
+    my $rc = try {
+        $self->exec($cmd);
+        1;
+    };
+    return if (!$rc);
 
     $cmd = sprintf "umount %s", $self->mountpoint;
     $self->exec($cmd);

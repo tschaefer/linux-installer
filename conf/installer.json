@@ -45,7 +45,7 @@
       "type": "8300",
       "crypt": "qwe123",
       "filesystem": {
-        "label": "root",
+        "label": "data",
         "type": "f2fs"
       }
     }

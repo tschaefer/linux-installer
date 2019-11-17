@@ -9,7 +9,7 @@ with 'Linux::Installer::Filesystem';
 sub make {
     my $self = shift;
 
-    my $cmd = sprintf "mkfs.f2fs %s %s",
+    my $cmd = sprintf "mkfs.f2fs -f %s %s",
       $self->label ? "-l " . $self->label : '',
       $self->device;
     $self->exec($cmd);

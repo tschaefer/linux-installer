@@ -18,8 +18,9 @@ has 'targets' => (
 );
 
 has 'options' => (
-    is  => 'ro',
-    isa => 'ArrayRef',
+    is      => 'ro',
+    isa     => 'ArrayRef',
+    default => sub { [] },
 );
 
 has 'efi_directory' => (
