@@ -2,12 +2,12 @@
   "disk": [
     {
       "label": "bios",
-      "size": "5MB",
+      "size": "5MiB",
       "type": "ef02"
     },
     {
       "label": "efi",
-      "size": "256MB",
+      "size": "256MiB",
       "type": "ef00",
       "filesystem": {
         "label": "efi",
@@ -17,7 +17,7 @@
     },
     {
       "label": "boot",
-      "size": "512MB",
+      "size": "512MiB",
       "type": "8300",
       "filesystem": {
         "label": "boot",
@@ -27,7 +27,7 @@
     },
     {
       "label": "root",
-      "size": "512MB",
+      "size": "512MiB",
       "type": "8304",
       "filesystem": {
         "label": "root",
@@ -35,13 +35,13 @@
         "type": "f2fs",
         "image": {
             "uri": "file:///tmp/root.tar.gz",
-            "type": "tar"
+            "type": "Tar"
         }
       }
     },
     {
       "label": "data",
-      "size": "384MB",
+      "size": "384MiB",
       "type": "8300",
       "crypt": "qwe123",
       "filesystem": {

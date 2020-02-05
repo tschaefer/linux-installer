@@ -12,36 +12,36 @@ bootloader:
   type: grub
 disk:
 - label: bios
-  size: 5MB
+  size: 5MiB
   type: ef02
 - filesystem:
     label: efi
     mountpoint: /boot/efi
     type: vfat
   label: efi
-  size: 256MB
+  size: 256MiB
   type: ef00
 - filesystem:
     label: boot
     mountpoint: /boot
     type: ext2
   label: boot
-  size: 512MB
+  size: 512MiB
   type: '8300'
 - filesystem:
     image:
-      type: tar
+      type: Tar
       uri: file:///tmp/root.tar.gz
     label: root
     mountpoint: /
     type: f2fs
   label: root
-  size: 512MB
+  size: 512MiB
   type: '8304'
 - crypt: qwe123
   filesystem:
     label: data
     type: f2fs
   label: data
-  size: 384MB
+  size: 384MiB
   type: '8300'
