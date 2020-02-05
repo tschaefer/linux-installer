@@ -124,8 +124,8 @@ sub _build_root {
 sub _require_package {
     my ( $self, $package, $subpackage ) = @_;
 
-    $subpackage = $subpackage if ($subpackage);
-    $package    = $package;
+    $subpackage = ucfirst lc $subpackage if ($subpackage);
+    $package    = ucfirst lc $package;
 
     my $perlmodule;
     try {
@@ -247,7 +247,7 @@ sub _build_images {
         if ( $partition->{'filesystem'}{'image'} ) {
             my $config = $partition->{'filesystem'}{'image'};
 
-            my $type = $config->{'type'};
+            my $type = ucfirst lc $config->{'type'};
 
             my $target;
             if ( $type eq 'Tar' ) {

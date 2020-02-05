@@ -35,7 +35,7 @@
         "type": "f2fs",
         "image": {
             "uri": "file:///tmp/root.tar.gz",
-            "type": "Tar"
+            "type": "tar"
         }
       }
     },

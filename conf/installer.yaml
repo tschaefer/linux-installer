@@ -30,7 +30,7 @@ disk:
   type: '8300'
 - filesystem:
     image:
-      type: Tar
+      type: tar
       uri: file:///tmp/root.tar.gz
     label: root
     mountpoint: /
