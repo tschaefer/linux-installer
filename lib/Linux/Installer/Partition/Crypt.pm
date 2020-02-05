@@ -6,6 +6,8 @@ use warnings;
 use Moose;
 extends 'Linux::Installer::Partition';
 
+use File::Temp;
+
 use Linux::Installer::Utils::Types;
 
 has 'passphrase' => (
@@ -33,7 +35,7 @@ has 'device_mapper' => (
 sub _build_device_mapper {
     my $self = shift;
 
-    my ($device) = $self->device =~ /([[:alnum:]]+)$/;
+    my ($device) = $self->device =~ /([a-z0-9]+)$/;
     my $device_mapper = sprintf "/dev/mapper/%s_crypt", $device;
 
     return $device_mapper;
@@ -83,7 +85,7 @@ sub open {
 
     return if ( !-e $self->device );
 
-    my ($dm_name) = $self->device_mapper =~ /([[:alnum:]_]+)$/;
+    my ($dm_name) = $self->device_mapper =~ /([a-z0-9_]+)$/;
     my $cmd = sprintf "cryptsetup open --key-file=%s %s %s", $self->key_file,
       $self->device, $dm_name;
     $self->exec($cmd);

@@ -8,7 +8,7 @@ with 'Linux::Installer::Bootloader';
 
 use Readonly;
 
-Readonly my $template =>
+Readonly::Scalar my $template =>
   "grub-install %s --boot-directory=%s --efi-directory=%s --target=%s %s";
 
 has 'targets' => (

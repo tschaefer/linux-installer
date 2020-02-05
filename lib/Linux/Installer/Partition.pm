@@ -48,11 +48,11 @@ sub create {
     my ( $device, $number );
     if ( $self->device =~ /[0-9]+p[0-9]+$/ ) {
         ( $device, $number ) =
-          $self->device =~ /(\/dev\/[[:alnum:]]+)p([[:digit:]]+)/;
+          $self->device =~ /(\/dev\/[[a-z0-9]]+)p([[0-9]]+)/;
     }
     else {
           ( $device, $number ) =
-            $self->device =~ /(\/dev\/[[:lower:]]+)([[:digit:]]+)/;
+            $self->device =~ /(\/dev\/[a-z]+)([0-9]+)/;
     }
 
     my $cmd = sprintf "sgdisk --new=%d:%d:%d %s", $number, $self->start_sector,

@@ -41,7 +41,7 @@ has 'size' => (
 sub _read_disk_info {
     my ( $self, $uri ) = @_;
 
-    my ($dev) = $self->device =~ /([[:alnum:]]+)$/;
+    my ($dev) = $self->device =~ /([a-z0-9]+)$/;
     my $file  = File::Spec->catdir( '/sys/class/block', $dev, $uri );
     my $info; $info  = $self->read($file) if (-e $file);
 
