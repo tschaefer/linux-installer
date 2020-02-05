@@ -3,14 +3,15 @@
 use strict;
 use warnings;
 
-use FindBin;
-use lib "$FindBin::Bin/../lib";
+use FindBin qw($Bin);
+use lib "$Bin/../lib";
+
+use utf8;
 
 use Getopt::Long;
 use Log::Log4perl;
 use Pod::Usage;
 use Try::Tiny;
-use utf8;
 
 use Linux::Installer;
 
@@ -149,9 +150,9 @@ install bootloader (grub2)
 
 =back
 
-The installer configuration (--config-file|-f) is provided in JSON format and
-describes the layout and steps to take. The installation is logged by
-Log::Log4perl customised by the log configuration (--log-config-file|-l).
+The installer configuration (--config-file|-f) is provided in JSON or YAML
+format and describes the layout and steps to take. The installation is logged
+by Log::Log4perl customised by the log configuration (--log-config-file|-l).
 
 =head1 SEE ALSO
 
