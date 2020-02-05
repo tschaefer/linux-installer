@@ -399,16 +399,13 @@ sub run {
 
     $self->logger->info("Run installation.");
 
-    use Data::Printer;
-    p $self->images_;
-
-    #    $self->disk->prepare();
-    #    $_->create() foreach ( @{ $self->partitions } );
-    #    $self->_open_crypted_partition();
-    #    $_->make()   foreach ( @{ $self->filesystems } );
-    #    $self->_mount_filesystem();
-    #    $self->bootloader->install();
-    #    $_->install() foreach ( @{ $self->images } );
+    $self->disk->prepare();
+    $_->create() foreach ( @{ $self->partitions } );
+    $self->_open_crypted_partition();
+    $_->make()   foreach ( @{ $self->filesystems } );
+    $self->_mount_filesystem();
+    $self->bootloader->install();
+    $_->install() foreach ( @{ $self->images } );
 
     $self->logger->info("Finish installation.");
 
