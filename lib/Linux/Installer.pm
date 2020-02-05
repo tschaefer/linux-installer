@@ -6,6 +6,9 @@ use warnings;
 use Moose;
 with 'Linux::Installer::Utils::Tools';
 
+use Readonly;
+use English qw(-no_match_vars);
+
 use File::Spec;
 use File::Temp;
 use JSON::XS;
@@ -13,8 +16,6 @@ use YAML::XS;
 use Try::Tiny;
 
 use Linux::Installer::Disk;
-use Linux::Installer::Partition;
-use Linux::Installer::Partition::Crypt;
 use Linux::Installer::Utils::Types;
 
 our $VERSION = '1.00';
@@ -22,18 +23,18 @@ our $VERSION = '1.00';
 no warnings qw( uninitialized );
 
 has 'bootloader' => (
-    is      => 'ro',
-    isa     => 'Bootloader',
-    lazy    => 1,
-    builder => '_build_bootloader',
+    is       => 'ro',
+    isa      => 'Bootloader',
+    lazy     => 1,
+    builder  => '_build_bootloader',
     init_arg => undef,
 );
 
 has 'config' => (
-    is      => 'ro',
-    isa     => 'HashRef',
-    lazy    => 1,
-    builder => '_build_config',
+    is       => 'ro',
+    isa      => 'HashRef',
+    lazy     => 1,
+    builder  => '_build_config',
     init_arg => undef,
 );
 
@@ -44,26 +45,26 @@ has 'device' => (
 );
 
 has 'disk' => (
-    is      => 'ro',
-    isa     => 'Disk',
-    lazy    => 1,
-    builder => '_build_disk',
+    is       => 'ro',
+    isa      => 'Disk',
+    lazy     => 1,
+    builder  => '_build_disk',
     init_arg => undef,
 );
 
 has 'filesystems' => (
-    is      => 'ro',
-    isa     => 'Maybe[ArrayRef[Filesystem]]',
-    lazy    => 1,
-    builder => '_build_filesystems',
+    is       => 'ro',
+    isa      => 'Maybe[ArrayRef[Filesystem]]',
+    lazy     => 1,
+    builder  => '_build_filesystems',
     init_arg => undef,
 );
 
 has 'images' => (
-    is      => 'ro',
-    isa     => 'Maybe[ArrayRef[Image]]',
-    lazy    => 1,
-    builder => '_build_images',
+    is       => 'ro',
+    isa      => 'Maybe[ArrayRef[Image]]',
+    lazy     => 1,
+    builder  => '_build_images',
     init_arg => undef,
 );
 
@@ -74,19 +75,41 @@ has 'configfile' => (
 );
 
 has 'partitions' => (
-    is      => 'ro',
-    isa     => 'ArrayRef[Partition]',
-    lazy    => 1,
-    builder => '_build_partitions',
+    is       => 'ro',
+    isa      => 'ArrayRef[Partition]',
+    lazy     => 1,
+    builder  => '_build_partitions',
     init_arg => undef,
 );
 
 has 'root' => (
     is       => 'ro',
+    isa      => 'Str',
     lazy     => 1,
     builder  => '_build_root',
     init_arg => undef,
 );
+
+has 'mountpoint' => (
+    is       => 'ro',
+    isa      => 'Str',
+    lazy     => 1,
+    builder  => '_build_mountpoint',
+    init_arg => undef,
+);
+
+Readonly::Scalar my $KiB => 1024;
+
+Readonly::Hash my %BYTES => (
+    B   => 1,
+    KiB => $KiB,
+    MiB => $KiB * $KiB,
+    GiB => $KiB * $KiB * $KiB,
+    TiB => $KiB * $KiB * $KiB * $KiB,
+    PiB => $KiB * $KiB * $KiB * $KiB * $KiB,
+);
+
+Readonly::Scalar my $PARTITION_ALLIGNMENT => 2048;
 
 sub _build_root {
     my $self = shift;
@@ -98,25 +121,45 @@ sub _build_root {
     );
 }
 
+sub _require_package {
+    my ( $self, $package, $subpackage ) = @_;
+
+    $subpackage = $subpackage if ($subpackage);
+    $package    = $package;
+
+    my $perlmodule;
+    try {
+        $perlmodule = sprintf "Linux/Installer/%s%s.pm", $package,
+          $subpackage ? "/$subpackage" : "";
+        require $perlmodule;
+    }
+    catch {
+        $self->logger->error_die( sprintf "Module '%s' not found.",
+            $perlmodule );
+    };
+
+    $perlmodule =~ s/\//::/g;
+    $perlmodule =~ s/\.pm//;
+
+    return $perlmodule;
+}
+
 sub _build_bootloader {
     my $self = shift;
 
-    my $type = ucfirst lc $self->config->{'bootloader'}{'type'};
-    require "Linux/Installer/Bootloader/$type.pm";
-
     my $config = $self->config->{'bootloader'};
-    $config->{'root_directory'} =
-      File::Spec->catdir( ( $self->root, $self->device ) );
-    $config->{'device'} = $self->device;
-    $config->{'boot_directory'} =
-      File::Spec->catdir( ( $self->root, $self->device,
-        $config->{'boot_directory'} || '/boot' ) );
-    $config->{'efi_directory'} =
-      File::Spec->catdir( ( $self->root, $self->device,
-        $config->{'efi_directory'} || '/boot/efi' ) ) ;
 
-    my $bootloader =
-      "Linux::Installer::Bootloader::$type"->new( { %{$config} } );
+    $config->{'root_directory'} = $self->mountpoint;
+    $config->{'device'}         = $self->device;
+    $config->{'boot_directory'} =
+      File::Spec->catdir(
+        ( $self->mountpoint, $config->{'boot_directory'} || '/boot' ) );
+    $config->{'efi_directory'} =
+      File::Spec->catdir(
+        ( $self->mountpoint, $config->{'efi_directory'} || '/boot/efi' ) );
+
+    my $package    = $self->_require_package( 'Bootloader', $config->{'type'} );
+    my $bootloader = $package->new( { %{$config} } );
 
     return $bootloader;
 }
@@ -160,30 +203,30 @@ sub _build_disk {
 sub _build_filesystems {
     my $self = shift;
 
-    my $root = File::Spec->catdir( ( $self->root, $self->device ) );
-    my $cmd = sprintf "mkdir -p %s", $root;
-    $self->exec($cmd);
-
     my ( @filesystems, $number );
-    foreach ( @{ $self->config->{'disk'} } ) {
-        if ( $_->{'filesystem'} ) {
+    foreach my $partition ( @{ $self->config->{'disk'} } ) {
+        if ( $partition->{'filesystem'} && %{ $partition->{'filesystem'} } ) {
+            my $config = $partition->{'filesystem'};
+
             my $part = $self->partitions->[$number];
-            my $device = ref $part eq 'Linux::Installer::Partition::Crypt'
-                       ? $part->device_mapper
-                       : $part->device;
+            my $device =
+              ref $part eq 'Linux::Installer::Partition::Crypt'
+              ? $part->device_mapper
+              : $part->device;
 
-            my $type = ucfirst lc $_->{'filesystem'}->{'type'};
-            require "Linux/Installer/Filesystem/$type.pm";
+            my $mountpoint;
+            $mountpoint =
+              File::Spec->catdir(
+                ( $self->mountpoint, $config->{'mountpoint'} ) )
+              if ( $config->{'mountpoint'} );
 
-            my $mountpoint =
-              File::Spec->catdir( ( $root, $_->{'filesystem'}->{'mountpoint'} ) )
-              if ($_->{'filesystem'}->{'mountpoint'});
-
-            my $filesystem = "Linux::Installer::Filesystem::$type"->new(
+            my $package =
+              $self->_require_package( 'Filesystem', $config->{'type'} );
+            my $filesystem = $package->new(
                 {
                     device     => $device,
-                    label      => $_->{'filesystem'}->{'label'} || undef,
-                    mountpoint => $mountpoint || undef,
+                    label      => $config->{'label'},
+                    mountpoint => $mountpoint,
                 }
             );
             push @filesystems, $filesystem;
@@ -198,19 +241,20 @@ sub _build_images {
     my $self = shift;
 
     my ( @images, $number );
-    foreach ( @{ $self->config->{'disk'} } ) {
+    foreach my $partition ( @{ $self->config->{'disk'} } ) {
         $number++;
 
-        if ( $_->{'filesystem'}{'image'} ) {
-            my $type = ucfirst lc $_->{'filesystem'}{'image'}{'type'};
-            require "Linux/Installer/Image/$type.pm";
+        if ( $partition->{'filesystem'}{'image'} ) {
+            my $config = $partition->{'filesystem'}{'image'};
+
+            my $type = $config->{'type'};
 
             my $target;
             if ( $type eq 'Tar' ) {
                 $target = File::Spec->catdir(
                     (
-                        $self->root, $self->device,
-                        $_->{'filesystem'}{'mountpoint'}
+                        $self->mountpoint,
+                        $partition->{'filesystem'}{'mountpoint'}
                     )
                 );
             }
@@ -218,9 +262,10 @@ sub _build_images {
                 $target = sprintf "%s%d", $self->device, $number;
             }
 
-            my $image = "Linux::Installer::Image::$type"->new(
+            my $package = $self->_require_package( 'Image', $type );
+            my $image   = $package->new(
                 {
-                    uri    => URI->new($_->{'filesystem'}{'image'}{'uri'}),
+                    uri    => URI->new( $config->{'uri'} ),
                     target => $target,
                 }
             );
@@ -231,65 +276,74 @@ sub _build_images {
     return \@images;
 }
 
+sub _determine_partition_size {
+    my ( $self, $size ) = @_;
+
+    my ( $mult, $unit ) = $size =~ /([0-9]+)([A-Za-z]+)/;
+    $size = $mult * $BYTES{$unit};
+
+    return $size;
+}
+
 sub _build_partitions {
     my $self = shift;
 
-    my %units = (
-        B  => 1,
-        KB => 1024,
-        MB => 1024 * 1024,
-        GB => 1024 * 1024 * 1024,
-        TB => 1024 * 1024 * 1024 * 1024,
-        PB => 1024 * 1024 * 1024 * 1024 * 1024,
-    );
-
     my ( @partitions, $start_sector, $end_sector, $number, $total_size );
-    foreach ( @{ $self->config->{'disk'} } ) {
+    foreach my $partition ( @{ $self->config->{'disk'} } ) {
         $number++;
 
-        my $size = uc $_->{'size'};
-        my ( $mult, $unit ) = $size =~ /([[:digit:]]+)([[:upper:]]+)/;
-        $size = $mult * $units{$unit};
+        my $size = $partition->{'size'};
+        $size = $self->_determine_partition_size($size);
         $total_size += $size;
 
-        $start_sector = $end_sector + 2048;
+        $start_sector = $end_sector + $PARTITION_ALLIGNMENT;
         $end_sector   = $start_sector + $size / $self->disk->sector_size;
 
-        my $device = $self->device =~ /[a-z]+[0-9]+$/
-                   ? $self->device . 'p'
-                   : $self->device;
+        my $device =
+            $self->device =~ /[a-z]+[0-9]+$/
+          ? $self->device . 'p'
+          : $self->device;
         $device = sprintf "%s%d", $device, $number;
 
-        my $type = "Linux::Installer::Partition";
-        $type = "Linux::Installer::Partition::Crypt" if ($_->{'crypt'});
+        my $crypt;
+        $crypt = "Crypt" if ( $partition->{'crypt'} );
+        my $package = $self->_require_package( "Partition", $crypt );
 
-        my $partition = $type->new(
+        my $partition = $package->new(
             {
                 device       => $device,
-                type         => $_->{'type'},
+                type         => $partition->{'type'},
                 size         => $size,
-                label        => $_->{'label'} || undef,
+                label        => $partition->{'label'},
                 start_sector => $start_sector,
                 end_sector   => $end_sector,
-                passphrase   => $_->{'crypt'},
+                passphrase   => $partition->{'crypt'},
             }
         );
         push @partitions, $partition;
     }
 
-    $self->logger->error_warn(
-        sprintf "Configuration exceeds disk size '%d B'",
-        $self->disk->size
-    ) if ( $total_size > $self->disk->size );
+    $self->logger->error_warn( sprintf "Configuration exceeds disk size '%d B'",
+        $self->disk->size )
+      if ( $total_size > $self->disk->size );
 
     return \@partitions;
+}
+
+sub _build_mountpoint {
+    my $self = shift;
+
+    return File::Spec->catdir( ( $self->root, $self->device ) );
 }
 
 sub _mount_filesystem {
     my $self = shift;
 
+    my $cmd = sprintf "mkdir -p %s", $self->mountpoint;
+    $self->exec($cmd);
 
-    $_->mount() foreach ( sort { $a->mountpoint cmp $b->mountpoint }
+    $_->mount()
+      foreach ( sort { $a->mountpoint cmp $b->mountpoint }
         @{ $self->filesystems } );
 
     return;
@@ -298,7 +352,8 @@ sub _mount_filesystem {
 sub _umount_filesystem {
     my $self = shift;
 
-    $_->umount() foreach ( sort { $b->mountpoint cmp $a->mountpoint }
+    $_->umount()
+      foreach ( sort { $b->mountpoint cmp $a->mountpoint }
         @{ $self->filesystems } );
 
     return;
@@ -307,8 +362,8 @@ sub _umount_filesystem {
 sub _open_crypted_partition {
     my $self = shift;
 
-    foreach (@{ $self->partitions }) {
-        $_->open() if (ref $_ eq "Linux::Installer::Partition::Crypt");
+    foreach ( @{ $self->partitions } ) {
+        $_->open() if ( ref $_ eq "Linux::Installer::Partition::Crypt" );
     }
 
     return;
@@ -317,16 +372,19 @@ sub _open_crypted_partition {
 sub _close_crypted_partition {
     my $self = shift;
 
-    foreach (@{ $self->partitions }) {
-        $_->close() if (ref $_ eq "Linux::Installer::Partition::Crypt");
+    foreach ( @{ $self->partitions } ) {
+        $_->close() if ( ref $_ eq "Linux::Installer::Partition::Crypt" );
     }
 
     return;
 }
 
-
 sub DEMOLISH {
     my $self = shift;
+
+    # DEMOLISH can not be overriden
+    my $ref = ref $self;
+    return if ( $ref !~ /^Linux::Installer$/ );
 
     $self->_umount_filesystem();
     $self->_close_crypted_partition();
@@ -341,13 +399,16 @@ sub run {
 
     $self->logger->info("Run installation.");
 
-    $self->disk->prepare();
-    $_->create() foreach ( @{ $self->partitions } );
-    $self->_open_crypted_partition();
-    $_->make()   foreach ( @{ $self->filesystems } );
-    $self->_mount_filesystem();
-    $self->bootloader->install();
-    $_->install() foreach ( @{ $self->images } );
+    use Data::Printer;
+    p $self->images_;
+
+    #    $self->disk->prepare();
+    #    $_->create() foreach ( @{ $self->partitions } );
+    #    $self->_open_crypted_partition();
+    #    $_->make()   foreach ( @{ $self->filesystems } );
+    #    $self->_mount_filesystem();
+    #    $self->bootloader->install();
+    #    $_->install() foreach ( @{ $self->images } );
 
     $self->logger->info("Finish installation.");
 
