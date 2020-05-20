@@ -280,7 +280,9 @@ sub _determine_partition_size {
     my ( $self, $size ) = @_;
 
     my ( $mult, $unit ) = $size =~ /([0-9]+)([A-Za-z]+)/;
-    $size = $mult * $BYTES{$unit};
+    my $bytes = $BYTES{$unit};
+    $self->logger->error(sprintf "invalid size unit '%s'", $unit) if (!$bytes);
+    $size = $mult * $bytes;
 
     return $size;
 }
