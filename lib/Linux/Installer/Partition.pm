@@ -46,9 +46,9 @@ sub create {
     $self->logger->info( sprintf "Create partition: %s", $self->device );
 
     my ( $device, $number );
-    if ( $self->device =~ /[0-9]+p[0-9]+$/ ) {
+    if ( $self->device =~ /[0-9]+p[0-9]+/ ) {
         ( $device, $number ) =
-          $self->device =~ /(\/dev\/[[a-z0-9]]+)p([[0-9]]+)/;
+          $self->device =~ /(\/dev\/[a-z]+[0-9]+)p([0-9]+)/;
     }
     else {
           ( $device, $number ) =
