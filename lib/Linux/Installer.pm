@@ -227,6 +227,7 @@ sub _build_filesystems {
                     device     => $device,
                     label      => $config->{'label'},
                     mountpoint => $mountpoint,
+                    options    => $config->{'options'},
                 }
             );
             push @filesystems, $filesystem;

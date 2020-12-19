@@ -9,8 +9,9 @@ with 'Linux::Installer::Filesystem';
 sub make {
     my $self = shift;
 
-    my $cmd = sprintf "mkfs.ext3 %s %s",
+    my $cmd = sprintf "mkfs.ext3 %s %s %s",
       $self->label ? "-L " . $self->label : '',
+      $self->stringify_options,
       $self->device;
     $self->exec($cmd);
 

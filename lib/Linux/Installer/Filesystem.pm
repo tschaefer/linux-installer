@@ -26,6 +26,11 @@ has 'mountpoint' => (
     isa => 'Maybe[Str]',
 );
 
+has 'options' => (
+    is     => 'ro',
+    isa    => 'Maybe[ArrayRef]',
+);
+
 before 'make' => sub {
     my $self = shift;
 
@@ -33,6 +38,22 @@ before 'make' => sub {
 
     return;
 };
+
+sub stringify_options {
+    my $self = shift;
+
+    return '' if ( !$self->options );
+
+    my $str = '';
+    foreach my $option ( @{ $self->options } ) {
+        $option = join ' ', each %{$option}
+          if ( ref $option eq 'HASH' );
+
+        $str = sprintf "%s %s", $str, $option;
+    }
+
+    return $str;
+}
 
 sub mount {
     my ($self) = @_;
@@ -58,11 +79,11 @@ sub umount {
     return if ( !-e $self->mountpoint );
 
     my $cmd = sprintf "mountpoint -q %s", $self->mountpoint;
-    my $rc = try {
+    my $rc  = try {
         $self->exec($cmd);
         1;
     };
-    return if (!$rc);
+    return if ( !$rc );
 
     $cmd = sprintf "umount %s", $self->mountpoint;
     $self->exec($cmd);

@@ -33,6 +33,11 @@
         "label": "root",
         "mountpoint": "/",
         "type": "f2fs",
+        "options": [
+          {
+            "-i": "4096"
+          }
+        ],
         "image": {
             "uri": "file:///tmp/root.tar.gz",
             "type": "tar"

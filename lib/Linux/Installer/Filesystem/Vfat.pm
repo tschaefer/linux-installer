@@ -9,8 +9,9 @@ with 'Linux::Installer::Filesystem';
 sub make {
     my $self = shift;
 
-    my $cmd = sprintf "mkfs.vfat %s %s",
+    my $cmd = sprintf "mkfs.vfat %s %s %s",
       $self->label ? "-n " . $self->label : '',
+      $self->stringify_options,
       $self->device;
     $self->exec($cmd);
 
