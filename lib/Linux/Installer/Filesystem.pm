@@ -13,6 +13,7 @@ requires 'make';
 has 'device' => (
     is       => 'ro',
     isa      => 'Str',
+    writer   => '_set_device',
     required => 1,
 );
 
@@ -30,6 +31,20 @@ has 'options' => (
     is     => 'ro',
     isa    => 'Maybe[ArrayRef]',
 );
+
+before ['make', 'mount', 'umount'] => sub {
+    my $self = shift;
+
+    return if ($self->device !~ /\/dev\/loop/);
+    return if ($self->device =~ /\/dev\/mapper\/loop/);
+
+    my ($name) = $self->device =~ /\/dev\/(loop.+)/;
+    my $device = sprintf "/dev/mapper/%s", $name;
+
+    $self->_set_device($device);
+
+    return;
+};
 
 before 'make' => sub {
     my $self = shift;

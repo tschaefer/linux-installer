@@ -59,6 +59,11 @@ sub create {
       $self->end_sector, $device;
     $self->exec($cmd);
 
+    if ( $device =~ /\/dev\/loop/ ) {
+        $cmd = sprintf "kpartx -av %s", $device;
+        $self->exec($cmd);
+    }
+
     $cmd = sprintf "sgdisk --typecode=%d:%s %s", $number, $self->type, $device;
     $self->exec($cmd);
 
