@@ -10,6 +10,10 @@ use File::Temp;
 
 use Linux::Installer::Utils::Types;
 
+has '+device' => (
+    writer => '_set_device',
+);
+
 has 'passphrase' => (
     is       => 'ro',
     isa      => 'Str',
@@ -35,8 +39,8 @@ has 'device_mapper' => (
 sub _build_device_mapper {
     my $self = shift;
 
-    my ($device) = $self->device =~ /([a-z0-9]+)$/;
-    my $device_mapper = sprintf "/dev/mapper/%s_crypt", $device;
+    my ($name) = $self->device =~ /([a-z0-9]+)$/;
+    my $device_mapper = sprintf "/dev/mapper/%s_crypt", $name;
 
     return $device_mapper;
 }
@@ -57,6 +61,12 @@ sub _build_key_file {
     return $key_file;
 }
 
+sub BUILD {
+    my $self = shift;
+
+    return $self->which('cryptsetup');
+}
+
 sub DEMOLISH {
     my $self = shift;
 
@@ -70,6 +80,13 @@ after 'create' => sub {
     my $self = shift;
 
     $self->logger->info( sprintf "Encrypt partition: %s", $self->device );
+
+    if ($self->device =~ /\/dev\/loop/) {
+        my ($name) = $self->device =~ /\/dev\/(loop.+)/;
+        my $device = sprintf "/dev/mapper/%s", $name;
+
+        $self->_set_device($device);
+    }
 
     my $cmd =
       sprintf
@@ -93,7 +110,7 @@ sub open {
     return;
 }
 
-sub close {
+sub close { ## no critic (NamingConventions::ProhibitAmbiguousNames)
     my $self = shift;
 
     return if ( !-e $self->device_mapper );

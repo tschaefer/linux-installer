@@ -121,29 +121,6 @@ sub _build_root {
     );
 }
 
-sub _require_package {
-    my ( $self, $package, $subpackage ) = @_;
-
-    $subpackage = ucfirst lc $subpackage if ($subpackage);
-    $package    = ucfirst lc $package;
-
-    my $perlmodule;
-    try {
-        $perlmodule = sprintf "Linux/Installer/%s%s.pm", $package,
-          $subpackage ? "/$subpackage" : "";
-        require $perlmodule;
-    }
-    catch {
-        $self->logger->error_die( sprintf "Module '%s' not found.",
-            $perlmodule );
-    };
-
-    $perlmodule =~ s/\//::/g;
-    $perlmodule =~ s/\.pm//;
-
-    return $perlmodule;
-}
-
 sub _build_bootloader {
     my $self = shift;
 
@@ -308,9 +285,9 @@ sub _build_partitions {
           : $self->device;
         $device = sprintf "%s%d", $device, $number;
 
-        my $crypt;
-        $crypt = "Crypt" if ( $partition->{'crypt'} );
-        my $package = $self->_require_package( "Partition", $crypt );
+        my $subpackage;
+        $subpackage = "Crypt" if ( $partition->{'crypt'} );
+        my $package = $self->_require_package( "Partition", $subpackage );
 
         my $partition = $package->new(
             {

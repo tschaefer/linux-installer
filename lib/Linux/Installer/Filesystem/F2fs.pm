@@ -6,10 +6,17 @@ use warnings;
 use Moose;
 with 'Linux::Installer::Filesystem';
 
+has 'executable' => (
+    is      => 'ro',
+    isa     => 'Str',
+    default => 'mkfs.f2fs',
+);
+
 sub make {
     my $self = shift;
 
-    my $cmd = sprintf "mkfs.f2fs -f %s %s %s",
+    my $cmd = sprintf "%s -f %s %s %s",
+      $self->executable,
       $self->label ? "-l " . $self->label : '',
       $self->stringify_options,
       $self->device;

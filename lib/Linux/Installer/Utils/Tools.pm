@@ -19,6 +19,44 @@ has 'logger' => (
     init_arg => undef,
 );
 
+sub _require_package {
+    my ( $self, $package, $subpackage ) = @_;
+
+    $subpackage = ucfirst lc $subpackage if ($subpackage);
+    $package    = ucfirst lc $package;
+
+    my $perlmodule;
+    try {
+        $perlmodule = sprintf "Linux/Installer/%s%s.pm", $package,
+          $subpackage ? "/$subpackage" : "";
+        require $perlmodule;
+    }
+    catch {
+        $self->logger->error_die( sprintf "Module '%s' not found.",
+            $perlmodule );
+    };
+
+    $perlmodule =~ s/\//::/g;
+    $perlmodule =~ s/\.pm//;
+
+    return $perlmodule;
+}
+
+sub which {
+    my ( $self, $exec ) = @_;
+
+    my $path = $ENV{PATH};
+    my @dirs = split /:/, $path;
+
+    foreach my $dir (@dirs) {
+        return if ( -x "$dir/$exec" );
+    }
+
+    $self->logger->error_die( sprintf "Command '%s' not found.", $exec );
+
+    return;
+}
+
 sub exec {
     my ( $self, $cmd, $output, $error ) = @_;
 
@@ -29,7 +67,7 @@ sub exec {
     my ( $rc, $out, $err );
     try {
         IPC::Run::run( \@exec, '>', \$out, '2>', \$err );
-        $rc = $?;
+        $rc = $?; ## no critic (ProhibitEvilVariables)
     }
     catch {
         $self->logger->error_die( ( split / at/ )[0] );
@@ -49,8 +87,8 @@ sub read {
 
     my $fh;
     my $string = do {
-        local $/ = undef;
-        open $fh, '<', $file or $self->logger->error_die("$!: $file");
+        local $/ = undef; ## no critic (ProhibitEvilVariables)
+        open $fh, '<', $file or $self->logger->error_die("$!: $file"); ## no critic (RequireBriefOpen)
         <$fh>;
 
     };

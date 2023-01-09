@@ -28,6 +28,12 @@ before 'install' => sub {
     return;
 };
 
+sub BUILD {
+    my $self = shift;
+
+    return $self->which($self->executable);
+}
+
 1;
 
 __END__

@@ -6,6 +6,12 @@ use warnings;
 use Moose;
 with 'Linux::Installer::Image';
 
+has 'executable' => (
+    is      => 'ro',
+    isa     => 'Str',
+    default => 'dd',
+);
+
 has 'blocksize' => (
     is      => 'ro',
     isa     => 'Str',
@@ -15,7 +21,10 @@ has 'blocksize' => (
 sub install {
     my $self = shift;
 
-    my $cmd = sprintf "dd if=%s of=%s obs=%s", $self->path, $self->target,
+    my $cmd = sprintf "%s if=%s of=%s obs=%s",
+      $self->executable,
+      $self->path,
+      $self->target,
       $self->blocksize;
     $self->exec($cmd);
 

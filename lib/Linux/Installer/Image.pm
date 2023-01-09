@@ -60,6 +60,12 @@ after 'install' => sub {
     return;
 };
 
+sub BUILD {
+    my $self = shift;
+
+    return $self->which($self->executable);
+}
+
 sub DEMOLISH {
     my $self = shift;
 

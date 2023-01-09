@@ -6,6 +6,12 @@ use warnings;
 use Moose;
 with 'Linux::Installer::Image';
 
+has 'executable' => (
+    is      => 'ro',
+    isa     => 'Str',
+    default => 'tar',
+);
+
 has 'options' => (
     is      => 'ro',
     isa     => 'ArrayRef',
@@ -18,7 +24,9 @@ sub install {
     my $self = shift;
 
     my $options = join ' ', map { '--' . $_ } @{ $self->options };
-    my $cmd = sprintf "tar --extract --file %s --directory %s %s", $self->path,
+    my $cmd = sprintf "%s --extract --file %s --directory %s %s",
+      $self->executable,
+      $self->path,
       $self->target, $options;
     $self->exec($cmd);
 

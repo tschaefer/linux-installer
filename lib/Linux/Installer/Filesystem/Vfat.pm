@@ -6,10 +6,17 @@ use warnings;
 use Moose;
 with 'Linux::Installer::Filesystem';
 
+has 'executable' => (
+    is      => 'ro',
+    isa     => 'Str',
+    default => 'mkfs.vfat',
+);
+
 sub make {
     my $self = shift;
 
-    my $cmd = sprintf "mkfs.vfat %s %s %s",
+    my $cmd = sprintf "%s %s %s %s",
+      $self->executable,
       $self->label ? "-n " . $self->label : '',
       $self->stringify_options,
       $self->device;

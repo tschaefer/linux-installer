@@ -54,6 +54,12 @@ before 'make' => sub {
     return;
 };
 
+sub BUILD {
+    my $self = shift;
+
+    return $self->which($self->executable);
+}
+
 sub stringify_options {
     my $self = shift;
 

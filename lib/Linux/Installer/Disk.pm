@@ -73,6 +73,12 @@ sub _build_size {
     return $size;
 }
 
+sub BUILD {
+    my $self = shift;
+
+    return $self->which('sgdisk');
+}
+
 sub prepare {
     my $self = shift;
 

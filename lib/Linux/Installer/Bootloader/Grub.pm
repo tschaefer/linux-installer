@@ -9,7 +9,13 @@ with 'Linux::Installer::Bootloader';
 use Readonly;
 
 Readonly::Scalar my $template =>
-  "grub-install %s --boot-directory=%s --efi-directory=%s --target=%s %s";
+  "%s %s --boot-directory=%s --efi-directory=%s --target=%s %s";
+
+has 'executable' => (
+    is      => 'ro',
+    isa     => 'Str',
+    default => 'grub-install',
+);
 
 has 'targets' => (
     is       => 'ro',
@@ -34,6 +40,7 @@ sub install {
 
     foreach ( @{ $self->targets } ) {
         my $cmd = sprintf $template,
+          $self->executable,
           ( join ' ', map { '--' . $_ } @{ $self->options } ),
           $self->boot_directory,
           $self->efi_directory,

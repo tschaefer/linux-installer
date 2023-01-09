@@ -40,10 +40,8 @@ has 'type' => (
     required => 1,
 );
 
-sub create {
-    my ( $self, $start_sector, $end_sector ) = @_;
-
-    $self->logger->info( sprintf "Create partition: %s", $self->device );
+sub _get_partition_info {
+    my $self = shift;
 
     my ( $device, $number );
     if ( $self->device =~ /[0-9]+p[0-9]+/ ) {
@@ -55,6 +53,12 @@ sub create {
             $self->device =~ /(\/dev\/[a-z]+)([0-9]+)/;
     }
 
+    return ( $device, $number );
+}
+
+sub _create_partition {
+    my ($self, $device, $number) = @_;
+
     my $cmd = sprintf "sgdisk --new=%d:%d:%d %s", $number, $self->start_sector,
       $self->end_sector, $device;
     $self->exec($cmd);
@@ -64,14 +68,50 @@ sub create {
         $self->exec($cmd);
     }
 
-    $cmd = sprintf "sgdisk --typecode=%d:%s %s", $number, $self->type, $device;
+    return;
+}
+
+sub _set_partition_type {
+    my ($self, $device, $number) = @_;
+
+    my $cmd = sprintf "sgdisk --typecode=%d:%s %s", $number, $self->type,
+      $device;
     $self->exec($cmd);
 
-    if ( $self->label ) {
-          $cmd = sprintf "sgdisk --change-name=%d:%s %s", $number, $self->label,
-            $device;
-          $self->exec($cmd);
-    }
+    return;
+}
+
+sub _change_partition_label {
+    my ($self, $device, $number) = @_;
+
+    return if !$self->label;
+
+    my $cmd = sprintf "sgdisk --change-name=%d:%s %s", $number, $self->label,
+      $device;
+    $self->exec($cmd);
+
+    return;
+}
+
+sub BUILD {
+    my $self = shift;
+
+    $self->which('kpartx') if ( $self->device =~ /\/dev\/loop/ );
+    $self->which('sgdisk');
+
+    return;
+}
+
+sub create {
+    my ( $self, $start_sector, $end_sector ) = @_;
+
+    $self->logger->info( sprintf "Create partition: %s", $self->device );
+
+    my ( $device, $number ) = $self->_get_partition_info;
+
+    $self->_create_partition($device, $number);
+    $self->_set_partition_type($device, $number);
+    $self->_change_partition_label($device, $number);
 
     return;
 }
