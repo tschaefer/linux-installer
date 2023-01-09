@@ -36,7 +36,7 @@ disk:
     mountpoint: /
     type: f2fs
   label: root
-  size: 512MiB
+  size: 1GiB
   type: '8304'
 - crypt: qwe123
   filesystem:

@@ -27,17 +27,12 @@
     },
     {
       "label": "root",
-      "size": "512MiB",
+      "size": "1GiB",
       "type": "8304",
       "filesystem": {
         "label": "root",
         "mountpoint": "/",
         "type": "f2fs",
-        "options": [
-          {
-            "-i": "4096"
-          }
-        ],
         "image": {
             "uri": "file:///tmp/root.tar.gz",
             "type": "tar"
